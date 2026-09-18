@@ -9,6 +9,11 @@
 </head>
 <body>
 
+    <!-- Nawigacja / Przycisk przejścia do listy zgłoszeń -->
+    <header class="top-nav">
+        <a href="admin/lista.html" class="btn btn-secondary">Zobacz listę zgłoszeń (Panel Admina) &rarr;</a>
+    </header>
+
     <!-- Główna sekcja zawartości strony -->
     <main>
         <!-- Sekcja z formularzem zgłoszeniowym -->
@@ -40,12 +45,8 @@
                 </div>
 
                 <!-- Przycisk wysyłania formularza -->
-                <button type="submit">Dodaj zgłoszenie</button>
+                <button type="submit" class="btn btn-primary">Dodaj zgłoszenie</button>
             </form>
-        </section>
-
-        <!-- Pusty kontener na listę zgłoszeń (wypełniany dynamicznie) -->
-        <section id="issues-list" class="issues-list">
         </section>
     </main>
 
