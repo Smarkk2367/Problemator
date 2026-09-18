@@ -1,112 +1,151 @@
 // ==========================================
-// MODUŁ OBSŁUGI FORMULARZA I ZAPISU W LOCALSTORAGE
+// MODUŁ GŁÓWNY: FORMULARZ, STAŁE I GLOBALNE FUNKCJE
 // ==========================================
 
+const STORAGE_KEY = 'school_issues';
+
+/**
+ * Globalna funkcja do zmiany statusu zgłoszenia.
+ * @param {string} id - Identyfikator zgłoszenia
+ * @param {string} newStatus - Nowy status ("Nowe", "W realizacji", "Rozwiązane")
+ */
+function updateIssueStatus(id, newStatus) {
+    if (!id) return;
+    
+    let issues = [];
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        issues = stored ? JSON.parse(stored) : [];
+    } catch (error) {
+        console.error('Błąd podczas pobierania danych z localStorage:', error);
+        return;
+    }
+
+    const issueIndex = issues.findIndex(issue => String(issue.id) === String(id));
+    if (issueIndex !== -1) {
+        issues[issueIndex].status = newStatus;
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(issues));
+        } catch (error) {
+            console.error('Błąd podczas zapisu zaktualizowanego statusu w localStorage:', error);
+        }
+
+        // Odświeżenie widoku (wywołanie renderIssues jeśli istnieje w window)
+        if (typeof window.renderIssues === 'function') {
+            window.renderIssues();
+        }
+
+        // Emisja zdarzenia własnego 'issuesUpdated' na obiekcie window
+        window.dispatchEvent(new CustomEvent('issuesUpdated', {
+            detail: { id, newStatus, issues }
+        }));
+    }
+}
+
+// Przypisanie funkcji do obiektu window (dostępność globalna)
+window.updateIssueStatus = updateIssueStatus;
+
+// Synchronizacja danych między kartami przeglądarki
 window.addEventListener('storage', (e) => {
-    if (e.key === 'school_issues') {
+    if (e.key === STORAGE_KEY && typeof window.renderIssues === 'function') {
         window.renderIssues();
     }
 });
 
+// ==========================================
+// INICJALIZACJA I OBSŁUGA FORMULARZA
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Pobranie referencji do elementów formularza
     const issueForm = document.getElementById('issue-form');
     const issueLocation = document.getElementById('issue-location');
     const issueDescription = document.getElementById('issue-description');
     const issuePriority = document.getElementById('issue-priority');
 
-    // Klucz pod którym przechowywane są zgłoszenia w localStorage
-    const STORAGE_KEY = 'school_issues';
+    if (issueForm) {
+        issueForm.addEventListener('submit', (e) => {
+            e.preventDefault();
 
-    if (!issueForm) {
-        console.error('Błąd: Nie znaleziono formularza o id "issue-form" w pliku HTML.');
-        return;
+            const newIssue = {
+                id: Date.now().toString(),
+                location: issueLocation.value.trim(),
+                description: issueDescription.value.trim(),
+                priority: issuePriority.value,
+                status: "Nowe"
+            };
+
+            if (!newIssue.location || !newIssue.description || !newIssue.priority) {
+                alert('Wypełnij wszystkie pola formularza.');
+                return;
+            }
+
+            let issues = [];
+            try {
+                const storedIssues = localStorage.getItem(STORAGE_KEY);
+                issues = storedIssues ? JSON.parse(storedIssues) : [];
+            } catch (error) {
+                console.error('Błąd podczas pobierania danych z localStorage:', error);
+                issues = [];
+            }
+
+            issues.unshift(newIssue);
+
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(issues));
+            } catch (error) {
+                console.error('Błąd podczas zapisu do localStorage:', error);
+            }
+
+            issueForm.reset();
+            alert('Zgłoszenie zostało pomyślnie dodane!');
+
+            if (typeof window.renderIssues === 'function') {
+                window.renderIssues();
+            }
+
+            window.dispatchEvent(new CustomEvent('issuesUpdated', {
+                detail: { newIssue, issues }
+            }));
+        });
     }
 
-    // 2. Obsługa zdarzenia wysłania formularza ('submit')
-    issueForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+    // ==========================================
+    // DELEGACJA ZDARZEŃ DLA ZMIANY STATUSU
+    // ==========================================
+    const listContainer = document.getElementById('issues-list-container') || document.getElementById('issues-list') || document;
 
-        // 3. Utworzenie obiektu zgłoszenia o zdefiniowanej strukturze
-        const newIssue = {
-            id: Date.now().toString(),
-            location: issueLocation.value.trim(),
-            description: issueDescription.value.trim(),
-            priority: issuePriority.value,
-            status: "Nowe"
-        };
-
-        // Walidacja danych przed zapisem
-        if (!newIssue.location || !newIssue.description || !newIssue.priority) {
-            alert('Wypełnij wszystkie pola formularza.');
-            return;
+    listContainer.addEventListener('change', (e) => {
+        const target = e.target;
+        if (target && (target.classList.contains('status-select') || target.dataset.id)) {
+            const issueId = target.dataset.id || target.getAttribute('data-id');
+            const newStatus = target.value;
+            if (issueId && newStatus) {
+                window.updateIssueStatus(issueId, newStatus);
+            }
         }
+    });
 
-        // 4. Pobranie dotychczasowych zgłoszeń z localStorage (lub utworzenie pustej tablicy)
+    // ==========================================
+    // RENDERING LISTY ZGŁOSZEŃ
+    // ==========================================
+    const issuesContainer = document.getElementById('issues-list-container') || document.getElementById('issues-list');
+
+    window.renderIssues = function () {
+        if (!issuesContainer) return;
+
         let issues = [];
         try {
-            const storedIssues = localStorage.getItem(STORAGE_KEY);
-            issues = storedIssues ? JSON.parse(storedIssues) : [];
+            const stored = localStorage.getItem(STORAGE_KEY);
+            issues = stored ? JSON.parse(stored) : [];
         } catch (error) {
-            console.error('Błąd podczas pobierania danych z localStorage:', error);
+            console.error('Błąd odczytu z localStorage:', error);
             issues = [];
         }
 
-        // 5. Dodanie nowego zgłoszenia na początek tablicy i zapis do localStorage
-        issues.unshift(newIssue);
-
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(issues));
-        } catch (error) {
-            console.error('Błąd podczas zapisu do localStorage:', error);
-        }
-
-        // 6. Zresetowanie pól formularza
-        issueForm.reset();
-
-        // 7. Informowanie innych modułów o aktualizacji danych:
-        // a) Wywołanie globalnej funkcji renderIssues(), jeśli została zdefiniowana przez drugi moduł
-        if (typeof window.renderIssues === 'function') {
-            window.renderIssues();
-        }
-
-        // b) Emisja zdarzenia własnego 'issuesUpdated' na obiekcie window
-        window.dispatchEvent(new CustomEvent('issuesUpdated', {
-            detail: { newIssue, issues }
-        }));
-    });
-});
-
-
-document.addEventListener('DOMContentLoaded', () => {
-    const STORAGE_KEY = 'school_issues';
-    const issuesList = document.getElementById('issues-list');
-
-    if (!issuesList) {
-        return;
-    }
-
-    function getStoredIssues() {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            return stored ? JSON.parse(stored) : [];
-        } catch (error) {
-            console.error('Błąd odczytu z localStorage:', error);
-            return [];
-        }
-    }
-
-    window.renderIssues = function () {
-        const issues = getStoredIssues();
-        issuesList.innerHTML = '';
+        issuesContainer.innerHTML = '';
 
         if (!issues || issues.length === 0) {
-            issuesList.innerHTML = `
-                <div class="empty-state">
-                    <svg class="empty-state-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
+            issuesContainer.innerHTML = `
+                <div class="empty-state" style="text-align: center; color: #718096; padding: 20px;">
                     <p>Brak aktywnych zgłoszeń. Wszystko działa sprawnie!</p>
                 </div>
             `;
@@ -115,19 +154,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         issues.forEach(issue => {
             const card = document.createElement('article');
-            card.className = `issue-card priority-${issue.priority ? issue.priority.toLowerCase() : 'medium'}`;
+            const priorityClass = issue.priority ? issue.priority.toLowerCase() : 'niski';
+            card.className = `issue-card priority-${priorityClass}`;
+            
             card.innerHTML = `
-                <div class="issue-header">
-                    <span class="issue-location">${escapeHTML(issue.location)}</span>
-                    <span class="issue-status">${escapeHTML(issue.status || 'Nowe')}</span>
+                <div class="issue-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong class="issue-location">${escapeHTML(issue.location)}</strong>
+                    <div class="status-wrapper">
+                        <label for="status-${issue.id}" style="font-size: 0.85rem; margin-right: 5px;">Status:</label>
+                        <select id="status-${issue.id}" class="status-select" data-id="${issue.id}" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #cbd5e0;">
+                            <option value="Nowe" ${issue.status === 'Nowe' ? 'selected' : ''}>Nowe</option>
+                            <option value="W realizacji" ${issue.status === 'W realizacji' ? 'selected' : ''}>W realizacji</option>
+                            <option value="Rozwiązane" ${issue.status === 'Rozwiązane' ? 'selected' : ''}>Rozwiązane</option>
+                        </select>
+                    </div>
                 </div>
-                <p class="issue-description">${escapeHTML(issue.description)}</p>
-                <div class="issue-footer">
+                <p class="issue-description" style="margin-bottom: 12px;">${escapeHTML(issue.description)}</p>
+                <div class="issue-footer" style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #718096;">
                     <span class="issue-priority-badge">Priorytet: ${escapeHTML(issue.priority)}</span>
                     <small class="issue-id">ID: #${issue.id}</small>
                 </div>
             `;
-            issuesList.appendChild(card);
+            issuesContainer.appendChild(card);
         });
     };
 
@@ -138,9 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
-    window.addEventListener('issuesUpdated', () => {
-        window.renderIssues();
-    });
-
+    // Pierwsze wywołanie renderowania po załadowaniu DOM
     window.renderIssues();
 });
