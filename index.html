@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Zgłaszania Usterek</title>
+    <!-- Sekcja nagłówka: podlinkowanie stylów CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Główna sekcja zawartości strony -->
+    <main>
+        <!-- Sekcja z formularzem zgłoszeniowym -->
+        <section class="form-section">
+            <h1>Formularz zgłaszania usterki</h1>
+            
+            <form id="issue-form">
+                <!-- Pole: Sprzęt lub sala -->
+                <div class="form-group">
+                    <label for="issue-location">Sprzęt lub sala:</label>
+                    <input type="text" id="issue-location" name="location" required>
+                </div>
+
+                <!-- Pole: Opis usterki -->
+                <div class="form-group">
+                    <label for="issue-description">Opis usterki:</label>
+                    <textarea id="issue-description" name="description" required></textarea>
+                </div>
+
+                <!-- Pole: Priorytet usterki -->
+                <div class="form-group">
+                    <label for="issue-priority">Priorytet:</label>
+                    <select id="issue-priority" name="priority" required>
+                        <option value="">-- Wybierz priorytet --</option>
+                        <option value="Niski">Niski</option>
+                        <option value="Średni">Średni</option>
+                        <option value="Wysoki">Wysoki</option>
+                    </select>
+                </div>
+
+                <!-- Przycisk wysyłania formularza -->
+                <button type="submit">Dodaj zgłoszenie</button>
+            </form>
+        </section>
+
+        <!-- Pusty kontener na listę zgłoszeń (wypełniany dynamicznie) -->
+        <section id="issues-list-container">
+        </section>
+    </main>
+
+    <!-- Sekcja skryptów JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
