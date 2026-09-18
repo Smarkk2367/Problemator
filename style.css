@@ -141,3 +141,42 @@ main {
 .issue-card.priority-wysoki {
     border-left-color: #e53e3e;
 }
+
+
+.admin-dashboard {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  background-color: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+.empty-state-icon {
+  color: #28a745;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
