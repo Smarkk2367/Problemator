@@ -152,6 +152,25 @@ main {
     margin-top: 6px;
 }
 
+/* Style walidacji formularza */
+.form-group input.is-invalid,
+.form-group textarea.is-invalid,
+.form-group select.is-invalid {
+    border-color: #e53e3e;
+    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.2);
+}
+
+.error-message {
+    color: #e53e3e;
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: none;
+}
+
+.error-message.active {
+    display: block;
+}
+
 /* ==========================================
    KONTENER NA LISTĘ ZGŁOSZEŃ (ISSUES-LIST-CONTAINER)
    ========================================== */
