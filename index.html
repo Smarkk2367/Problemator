@@ -25,12 +25,14 @@
                 <div class="form-group">
                     <label for="issue-location">Sprzęt lub sala:</label>
                     <input type="text" id="issue-location" name="location" required>
+                    <span class="error-message" id="error-location"></span>
                 </div>
 
                 <!-- Pole: Opis usterki -->
                 <div class="form-group">
                     <label for="issue-description">Opis usterki:</label>
                     <textarea id="issue-description" name="description" required></textarea>
+                    <span class="error-message" id="error-description"></span>
                 </div>
 
                 <!-- Pole: Priorytet usterki -->
@@ -42,6 +44,7 @@
                         <option value="Średni">Średni</option>
                         <option value="Wysoki">Wysoki</option>
                     </select>
+                    <span class="error-message" id="error-priority"></span>
                 </div>
 
                 <!-- Przycisk wysyłania formularza -->

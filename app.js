@@ -61,9 +61,57 @@ document.addEventListener('DOMContentLoaded', () => {
     const issueDescription = document.getElementById('issue-description');
     const issuePriority = document.getElementById('issue-priority');
 
+    const errorLocation = document.getElementById('error-location');
+    const errorDescription = document.getElementById('error-description');
+    const errorPriority = document.getElementById('error-priority');
+
+    function validateField(inputEl, errorEl, fieldName) {
+        if (!inputEl) return true;
+        const val = inputEl.value.trim();
+
+        if (!val) {
+            inputEl.classList.add('is-invalid');
+            if (errorEl) {
+                errorEl.textContent = `Pole "${fieldName}" nie może być puste ani zawierać samych spacji.`;
+                errorEl.classList.add('active');
+            }
+            return false;
+        } else {
+            inputEl.classList.remove('is-invalid');
+            if (errorEl) {
+                errorEl.textContent = '';
+                errorEl.classList.remove('active');
+            }
+            return true;
+        }
+    }
+
     if (issueForm) {
+        if (issueLocation) {
+            issueLocation.addEventListener('input', () => validateField(issueLocation, errorLocation, 'Sprzęt lub sala'));
+            issueLocation.addEventListener('blur', () => validateField(issueLocation, errorLocation, 'Sprzęt lub sala'));
+        }
+        if (issueDescription) {
+            issueDescription.addEventListener('input', () => validateField(issueDescription, errorDescription, 'Opis usterki'));
+            issueDescription.addEventListener('blur', () => validateField(issueDescription, errorDescription, 'Opis usterki'));
+        }
+        if (issuePriority) {
+            issuePriority.addEventListener('change', () => validateField(issuePriority, errorPriority, 'Priorytet'));
+            issuePriority.addEventListener('blur', () => validateField(issuePriority, errorPriority, 'Priorytet'));
+        }
+
         issueForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            const isLocationValid = validateField(issueLocation, errorLocation, 'Sprzęt lub sala');
+            const isDescriptionValid = validateField(issueDescription, errorDescription, 'Opis usterki');
+            const isPriorityValid = validateField(issuePriority, errorPriority, 'Priorytet');
+
+            if (!isLocationValid || !isDescriptionValid || !isPriorityValid) {
+                if (!isLocationValid && issueLocation) issueLocation.focus();
+                else if (!isDescriptionValid && issueDescription) issueDescription.focus();
+                else if (!isPriorityValid && issuePriority) issuePriority.focus();
+                return;
+            }
 
             const newIssue = {
                 id: Date.now().toString(),
@@ -72,11 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 priority: issuePriority.value,
                 status: "Nowe"
             };
-
-            if (!newIssue.location || !newIssue.description || !newIssue.priority) {
-                alert('Wypełnij wszystkie pola formularza.');
-                return;
-            }
 
             let issues = [];
             try {
@@ -96,6 +139,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             issueForm.reset();
+            [issueLocation, issueDescription, issuePriority].forEach(el => el && el.classList.remove('is-invalid'));
+            [errorLocation, errorDescription, errorPriority].forEach(el => {
+                if (el) {
+                    el.textContent = '';
+                    el.classList.remove('active');
+                }
+            });
+
             alert('Zgłoszenie zostało pomyślnie dodane!');
 
             if (typeof window.renderIssues === 'function') {
@@ -186,6 +237,5 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
-    // Pierwsze wywołanie renderowania po załadowaniu DOM
     window.renderIssues();
 });
